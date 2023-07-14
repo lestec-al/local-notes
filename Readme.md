@@ -23,5 +23,4 @@ A app for sharing notes with multiple devices on a local network. For example, w
 - launch file run.bat (tested on Windows 10)
 - (optional) if 'run.bat' doesn't work try:
     - open a command prompt and select the project folder through it
-    - if you are using a virtual environment, activate it
     - type command 'python run.py'
