@@ -1,68 +1,71 @@
-import socket, os, subprocess, threading
-from pathlib import Path
+import socket
 
-class LogHandler(threading.Thread):
-    def run(self):
-        with SERVER.stdout as s:
-            try:
-                for line in iter(s.readline, b''):
-                    print(line.decode("utf-8").strip())
+VENV_FOLDER_NAME = ".venv"
+PORT = 8000
+IP = socket.gethostbyname(socket.gethostname())
+LINK = f"http://{IP}:{PORT}"
 
-            except Exception as e:
-                print(str(e))
+# Start service
+if __name__ == "__main__":
+    import os, subprocess, threading
+    from pathlib import Path
 
-    def stop(self):
-        pass
+    class LogHandler(threading.Thread):
+        def run(self):
+            with SERVER.stdout as s:
+                try:
+                    for line in iter(s.readline, b''):
+                        print(line.decode("utf-8").strip())
 
-port = 8000
-ip = socket.gethostbyname(socket.gethostname())
-base_dir = Path(__file__).resolve().parent
-link = f"http://{ip}:{port}"
+                except Exception as e:
+                    print(str(e))
 
-env_found = False
-for f in os.scandir(base_dir):
-    if f.is_dir() and f.name == ".env":
-        env_found = True
-        break
+        def stop(self):
+            pass
 
-if env_found == True:
-    if os.name == 'nt':
-        env_command = ".env\\Scripts\\activate.ps1"
-    else:
-        env_command = "source .env/bin/activate"
-    final_command = f"{env_command}; python {base_dir}/manage.py runserver {ip}:{port}"
-else:
-    final_command = f"python {base_dir}/manage.py runserver {ip}:{port}"
+    base_dir = Path(__file__).resolve().parent
 
-SERVER = subprocess.Popen([
-        "powershell",
-        "-Command",
-        final_command
-    ],
-    stdout=subprocess.PIPE,
-    stderr=subprocess.STDOUT,
-    shell=True
-)
-
-log = LogHandler()
-log.start()
-os.startfile(link)
-
-print("Note: if something doesn't work, please repeat the installation process")
-
-while True:
-    input1 = input("COMMANDS: «exit», «link»\n")
-
-    if input1 == "exit":
+    # Find virtual environment
+    venv_path = Path(base_dir, VENV_FOLDER_NAME)
+    if venv_path.exists():
         if os.name == 'nt':
-            subprocess.Popen(f"TASKKILL /F /PID {SERVER.pid} /T")
+            env_command = f"{venv_path}\\Scripts\\activate.ps1"
         else:
-            SERVER.terminate()
-        break
-
-    elif input1 == "link":
-        print(link)
-        os.startfile(link)
-    
+            env_command = f"source {venv_path}/bin/activate"
+        final_command = f"{env_command}; python {base_dir}/manage.py runserver {IP}:{PORT}"
     else:
-        print("Unknown command")
+        final_command = f"python {base_dir}/manage.py runserver {IP}:{PORT}"
+    
+    # Run server
+    SERVER = subprocess.Popen([
+            "powershell",
+            "-Command",
+            final_command
+        ],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT,
+        shell=True
+    )
+    
+    log = LogHandler()
+    log.start()
+
+    os.startfile(LINK)
+    print("Note: if something doesn't work, please repeat the installation process")
+
+    while True:
+        input1 = input("Commands: «exit», «link»\n")
+
+        if input1 == "exit":
+            if os.name == 'nt':
+                subprocess.Popen(f"TASKKILL /F /PID {SERVER.pid} /T")
+            else:
+                SERVER.terminate()
+            break
+
+        elif input1 == "link":
+            print(LINK)
+            os.startfile(LINK)
+        
+        else:
+            print("Unknown command")
