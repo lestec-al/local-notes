@@ -28,30 +28,33 @@ if __name__ == "__main__":
     # Find virtual environment
     venv_path = Path(base_dir, VENV_FOLDER_NAME)
     if venv_path.exists():
-        if os.name == 'nt':
+        if os.name == "nt":
             env_command = f"{venv_path}\\Scripts\\activate.ps1"
         else:
             env_command = f"source {venv_path}/bin/activate"
         final_command = f"{env_command}; python {base_dir}/manage.py runserver {IP}:{PORT}"
     else:
         final_command = f"python {base_dir}/manage.py runserver {IP}:{PORT}"
-    
+
     # Run server
     SERVER = subprocess.Popen([
-            "powershell",
-            "-Command",
-            final_command
+        "powershell" if os.name == "nt" else "gnome-terminal",
+        "-Command",
+        final_command
         ],
         stdout=subprocess.PIPE,
         stderr=subprocess.STDOUT,
         shell=True
     )
-    
+
     log = LogHandler()
     log.start()
 
-    os.startfile(LINK)
-    print("Note: if something doesn't work, please repeat the installation process")
+    print(LINK)
+    try:
+        os.startfile(LINK)
+    except:
+        pass
 
     while True:
         input1 = input("Commands: «exit», «link»\n")
@@ -65,7 +68,10 @@ if __name__ == "__main__":
 
         elif input1 == "link":
             print(LINK)
-            os.startfile(LINK)
+            try:
+                os.startfile(LINK)
+            except:
+                pass
         
         else:
             print("Unknown command")
